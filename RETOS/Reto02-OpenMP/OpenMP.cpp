@@ -1,7 +1,6 @@
 #include <iostream>
 #include <stdlib.h>
-#include <vector>
-#include <thread>
+#include <omp.h>
 #include <functional>
 #include "../timer.hh"
 
@@ -64,7 +63,7 @@ void computeCell(int** &a, int** &b, int i, int dimensions, int* &sum)
         sum[j] = 0;
         for (size_t k = 0; k < dimensions; k++)
         {
-            sum[j] += a[i][k] * b[j][k];
+            sum[j] += a[i][k] * b[k][j];
         }
     }
 }
@@ -80,17 +79,14 @@ void computeCell(int** &a, int** &b, int i, int dimensions, int* &sum)
 int** assingMult(int** a, int** b, int dimensions)
 {
     int** mult = new int*[dimensions];
-    vector<thread> threads;
+    #pragma omp parallel for num_threads(dimensions)
     for (size_t i = 0; i < dimensions; i++)
     {
+        //cout << "Hilo id: " << omp_get_thread_num() << endl;
         mult[i] = new int[dimensions];
         int* &result = mult[i];
-        threads.push_back(thread(computeCell, ref(a), ref(b), i, dimensions, ref(result)));
+        computeCell(ref(a), ref(b), i, dimensions, ref(result));
     }
-    /* const auto processorCount = thread::hardware_concurrency();
-    int iteration = threads.size() / processorCount; */
-    for (thread &t : threads)
-        t.join();
     return mult;
 }
 
